@@ -1,24 +1,35 @@
+import json
 import logging
 
 import azure.functions as func
 
+from graphene import ObjectType, String, Boolean, Field, Schema, List
+
+HELP_TEXT="Please provide an encoded GraphQL data query, e.g. '{ \"query\": \"query { hello }\"}'"
+
+class Query(ObjectType):
+    hello = String()
+
+    def resolve_hello(query, info):
+        return "Hi there!"
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    name = req.params.get('name')
-    if not name:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            name = req_body.get('name')
+    # Generate schema
+    schema = Schema(query=Query)
 
-    if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
-    else:
-        return func.HttpResponse(
-             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-             status_code=200
-        )
+    # Extract query from request
+    try:
+        data = req.get_json()
+    except ValueError:
+        return func.HttpResponse(HELP_TEXT, status_code=400 )
+    if "query" not in data:
+        return func.HttpResponse(HELP_TEXT, status_code=400 )
+
+    # Execute query
+    result = schema.execute(data["query"]).to_dict()
+
+    return func.HttpResponse( 
+        json.dumps(result), 
+        mimetype="appication/json")
