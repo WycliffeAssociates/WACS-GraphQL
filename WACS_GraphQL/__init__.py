@@ -30,6 +30,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # Execute query
     result = schema.execute(data["query"]).to_dict()
 
-    return func.HttpResponse( 
-        json.dumps(result), 
-        mimetype="appication/json")
+    # Return result
+    return func.HttpResponse(
+            json.dumps(result),
+            mimetype="appication/json")
