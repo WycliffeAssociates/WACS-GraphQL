@@ -5,14 +5,33 @@ import azure.functions as func
 
 from graphene import ObjectType, String, Boolean, Field, Schema, List
 
-HELP_TEXT = 'Please provide an encoded GraphQL data query, e.g. \'{ "query": "query { hello }"}\''
+HELP_TEXT = (
+    "Please provide an encoded GraphQL data query, e.g.\n"
+    """curl -X POST -H "Content-Type: application/json" -d '{"query": "{ wacsCatalog { languageCode resourceType url } }"}' http://localhost:7071/api/WACS_GraphQL """
+)
+
+
+class Resource(ObjectType):
+    language_code = String()
+    resource_type = String()
+    url = String()
+
+    def __init__(self, language_code, resource_type, url):
+        self.language_code = language_code
+        self.resource_type = resource_type
+        self.url = url
 
 
 class Query(ObjectType):
-    hello = String()
+    wacs_catalog = List(Resource)
 
-    def resolve_hello(query, info):
-        return "Hi there!"
+    def resolve_wacs_catalog(query, info):
+        resource = Resource(
+            "en",
+            "ulb",
+            "https://content.bibletranslationtools.org/WA-Catalog/en_ulb",
+        )
+        return [resource]
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
