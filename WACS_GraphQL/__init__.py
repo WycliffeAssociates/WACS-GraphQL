@@ -2,12 +2,15 @@
 
 """ Provides a GraphQL interfact to the WACS WA-Catalog """
 
+from dataclasses import dataclass
 import json
 import logging
+import re
+import typing
 
-import azure.functions as func  # pylint: disable=import-error
-
-from graphene import ObjectType, String, Boolean, Field, Schema, List
+from graphene import ObjectType, String, Boolean, Field, Schema, List  # type: ignore # pylint: disable=import-error
+import azure.functions as func  # type: ignore # pylint: disable=import-error
+import requests
 
 HELP_TEXT = (
     "Please provide an encoded GraphQL data query, e.g.\n"
@@ -16,8 +19,58 @@ HELP_TEXT = (
     """http://localhost:7071/api/WACS_GraphQL """
 )
 
+RESOURCE_NAME_REGEX = re.compile(r"^([^_]+)_([^_]+)$")
 
-class Resource(ObjectType):  # pylint: disable=too-few-public-methods
+
+@dataclass
+class Repository:
+
+    """A repository on DCS or WACS."""
+
+    user_id: str
+    repo_id: str
+    url: str
+    create_date: str
+    update_date: str
+
+
+def gitea_orgs_repos(server: str, org: str) -> typing.List[Repository]:
+    """Reads list of organization's repos from server.  Read until we run out of pages."""
+    api_url = f"{server}/api/v1"
+    repos: typing.List[Repository] = []
+    page_num = 0
+    while True:
+
+        # Get next page of repos.
+        page_num += 1
+        request_url = f"{api_url}/orgs/{org}/repos?page={page_num}"
+        response = requests.get(request_url)
+        response.raise_for_status()
+        data = response.json()
+        num_items = len(data)
+        logging.debug("Received %d repo(s) from %s.", num_items, server)
+
+        # Stop when no more items
+        if num_items == 0:
+            logging.debug("No more repos, done.")
+            break
+
+        # Process repos
+        for json_repo in data:
+            repo = Repository(
+                user_id=json_repo["owner"]["login"],
+                repo_id=json_repo["name"],
+                url=json_repo["html_url"],
+                create_date=json_repo["created_at"],
+                update_date=json_repo["updated_at"],
+            )
+            repos.append(repo)
+
+    return repos
+
+
+class Resource(ObjectType):
+    # pylint: disable=too-few-public-methods
 
     """Represents a resource in the WACS WA-Catalog."""
 
@@ -41,12 +94,20 @@ class Query(ObjectType):
     def resolve_wacs_catalog(self, info):
         # pylint: disable=unused-argument,no-self-use
         """Responds to a wacsCatalog query"""
-        resource = Resource(
-            "en",
-            "ulb",
-            "https://content.bibletranslationtools.org/WA-Catalog/en_ulb",
+        resources: typing.List[Resource] = []
+        repos = gitea_orgs_repos(
+            "https://content.bibletranslationtools.org", "WA-Catalog"
         )
-        return [resource]
+
+        for repo in repos:
+            match = RESOURCE_NAME_REGEX.match(repo.repo_id)
+            if match:
+                resource = Resource(
+                    match.group(1), match.group(2), repo.url
+                )
+                resources.append(resource)
+
+        return resources
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
