@@ -94,7 +94,6 @@ class Query(ObjectType):
     def resolve_wacs_catalog(self, info):
         # pylint: disable=unused-argument,no-self-use
         """Responds to a wacsCatalog query"""
-        logging.info("resolve_wacs_catalog()")
         resources: typing.List[Resource] = []
         repos = gitea_orgs_repos(
             "https://content.bibletranslationtools.org", "WA-Catalog"
