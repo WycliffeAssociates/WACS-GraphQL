@@ -16,7 +16,7 @@ HELP_TEXT = (
     "Please provide an encoded GraphQL data query, e.g.\n"
     """curl -X POST -H "Content-Type: application/json" """
     """-d '{"query": "{ wacsCatalog { languageCode resourceType url } }"}' """
-    """http://localhost:7071/api/WACS_GraphQL """
+    """https://wacs-graphql.azurewebsites.net/api/WACS_GraphQL?code=<function access code>"""
 )
 
 RESOURCE_NAME_REGEX = re.compile(r"^([^_]+)_([^_]+)$")
@@ -48,11 +48,11 @@ def gitea_orgs_repos(server: str, org: str) -> typing.List[Repository]:
         response.raise_for_status()
         data = response.json()
         num_items = len(data)
-        logging.debug("Received %d repo(s) from %s.", num_items, server)
+        logging.info("Received %d repo(s) from %s.", num_items, server)
 
         # Stop when no more items
         if num_items == 0:
-            logging.debug("No more repos, done.")
+            logging.info("No more repos, done.")
             break
 
         # Process repos
@@ -94,6 +94,7 @@ class Query(ObjectType):
     def resolve_wacs_catalog(self, info):
         # pylint: disable=unused-argument,no-self-use
         """Responds to a wacsCatalog query"""
+        logging.info("resolve_wacs_catalog()")
         resources: typing.List[Resource] = []
         repos = gitea_orgs_repos(
             "https://content.bibletranslationtools.org", "WA-Catalog"
@@ -114,7 +115,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     """main function (called by Azure)"""
 
-    logging.info("Python HTTP trigger function processed a request.")
+    logging.info("Received HTTP request.")
 
     # Generate schema
     schema = Schema(query=Query)

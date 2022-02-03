@@ -1,7 +1,7 @@
 .PHONY: start run-query edit lint lint-watch
 
 start:
-	func start
+	func start --verbose
 
 run-query:
 	curl -X POST -H "Content-Type: application/json" -d '{"query": "{ wacsCatalog { languageCode resourceType url } }"}' http://localhost:7071/api/WACS_GraphQL  | jq .

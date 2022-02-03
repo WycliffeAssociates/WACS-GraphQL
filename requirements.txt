@@ -1,5 +1,5 @@
 # Do not include azure-functions-worker as it may conflict with the Azure Functions platform
 
-azure-functions
-graphene
-requests
+azure-functions==1.8.0
+graphene==2.1.8
+requests==2.22.0
