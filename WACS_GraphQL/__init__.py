@@ -1,3 +1,4 @@
+# vim: foldmethod=indent
 # pylint: disable=invalid-name
 
 """ Provides a GraphQL interfact to the WACS WA-Catalog """
@@ -35,7 +36,9 @@ class Repository:
 
 
 def gitea_orgs_repos(server: str, org: str) -> typing.List[Repository]:
+
     """Reads list of organization's repos from server.  Read until we run out of pages."""
+
     api_url = f"{server}/api/v1"
     repos: typing.List[Repository] = []
     page_num = 0
