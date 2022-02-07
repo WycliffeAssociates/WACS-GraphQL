@@ -6,6 +6,7 @@
 from dataclasses import dataclass
 import json
 import logging
+import os
 import re
 import typing
 
@@ -98,9 +99,8 @@ class Query(ObjectType):
         # pylint: disable=unused-argument,no-self-use
         """Responds to a wacsCatalog query"""
         resources: typing.List[Resource] = []
-        repos = gitea_orgs_repos(
-            "https://content.bibletranslationtools.org", "WA-Catalog"
-        )
+        wacs_api_url = info.context.get("WACS_API_URL")
+        repos = gitea_orgs_repos(wacs_api_url, "WA-Catalog")
 
         for repo in repos:
             match = RESOURCE_NAME_REGEX.match(repo.repo_id)
@@ -119,6 +119,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     logging.info("Received HTTP request.")
 
+    # Check environment variables
+    if "WACS_API_URL" not in os.environ:
+        logging.error("Fatal: WACS_API_URL not set.")
+        return func.HttpResponse(
+            "Environment config error, please ask an admin to review the log for details.",
+            status_code=500,
+        )
+    wacs_api_url = os.environ["WACS_API_URL"]
+
     # Generate schema
     schema = Schema(query=Query)
 
@@ -131,7 +140,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(HELP_TEXT, status_code=400)
 
     # Execute query
-    result = schema.execute(data["query"]).to_dict()
+    result = schema.execute(
+        data["query"], context={"WACS_API_URL": wacs_api_url}
+    ).to_dict()
 
     # Return result
     return func.HttpResponse(
