@@ -19,7 +19,7 @@ run-query-prod:
 		-H "Content-Type: application/json" \
 		-H "x-functions-key: $${WACS_GRAPHQL_FUNCTION_KEY_PROD}" \
 		-d '{"query": "{ wacsCatalog { languageCode resourceType url } }"}' \
-		https://wacs-graphql-azfunc-use2.azurewebsites.net/api/WACS_GraphQL
+		https://wacs-graphql.walink.org/api/WACS_GraphQL
 
 run-query-dev:
 	curl \
@@ -28,7 +28,7 @@ run-query-dev:
 		-H "Content-Type: application/json" \
 		-H "x-functions-key: $${WACS_GRAPHQL_FUNCTION_KEY_DEV}" \
 		-d '{"query": "{ wacsCatalog { languageCode resourceType url } }"}' \
-		https://wacs-graphql-azfunc-use2-dev.azurewebsites.net/api/WACS_GraphQL
+		https://wacs-graphql-dev.walink.org/api/WACS_GraphQL
 
 edit:
 	$(EDITOR) WACS_GraphQL/__init__.py makefile
