@@ -13,6 +13,7 @@ run-query-local:
 		http://localhost:7071/api/WACS_GraphQL
 
 run-query-prod:
+	test -n "$(WACS_GRAPHQL_FUNCTION_KEY_PROD)" # $$WACS_GRAPHQL_FUNCTION_KEY_PROD
 	curl \
 		-i \
 		-X POST \
@@ -22,6 +23,7 @@ run-query-prod:
 		https://wacs-graphql.walink.org/api/WACS_GraphQL
 
 run-query-dev:
+	test -n "$(WACS_GRAPHQL_FUNCTION_KEY_DEV)" # $$WACS_GRAPHQL_FUNCTION_KEY_DEV
 	curl \
 		-i \
 		-X POST \
